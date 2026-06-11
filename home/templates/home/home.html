@@ -1,0 +1,51 @@
+{% extends "home/base.html" %}
+
+{% block title %}Home | Jerin Shop{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center py-12 px-4">
+
+    <div class="text-center w-full max-w-2xl mx-auto">
+
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6"
+             style="background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,230,138,0.2);">
+            <span class="w-1.5 h-1.5 rounded-full inline-block" style="background: var(--accent);"></span>
+            Earn Smarter. Not Harder.
+        </div>
+
+        <!-- Heading -->
+        <h1 class="font-display font-extrabold leading-tight mb-5"
+            style="font-size: clamp(1.8rem, 8vw, 3.5rem); color: var(--fg);">
+            Welcome to
+            <span style="background: linear-gradient(135deg, #00e68a, #70ffc5);
+                         -webkit-background-clip: text;
+                         -webkit-text-fill-color: transparent;
+                         background-clip: text; display: inline-block;">
+                Jerin Shop
+            </span>
+        </h1>
+
+        <!-- Subtitle -->
+        <p class="leading-relaxed mb-10"
+           style="font-size: clamp(0.9rem, 3vw, 1.1rem); color: var(--muted);">
+            Your all-in-one platform for discovering real online income methods,
+            tools, and strategies that
+            <span style="color: var(--accent);">actually work</span>.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="flex flex-col items-stretch gap-3 w-full">
+            <a href="{% url 'coins:home' %}"
+               class="inline-flex items-center justify-center gap-3 px-6 py-3.5 rounded-xl font-semibold text-sm"
+               style="background: var(--accent); color: #0a0e17;">
+
+             <i class="fas fa-coins"></i>
+                Coins Sell
+                <i class="fas fa-arrow-right text-xs opacity-70"></i>
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

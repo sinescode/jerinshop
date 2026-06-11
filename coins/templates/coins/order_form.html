@@ -1,0 +1,498 @@
+{% extends 'home/base.html' %}
+{% load static %}
+
+{% block title %}Submit {{ coin.name }} • Sell to Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+  .order-form-wrapper { max-width: 620px; margin: 0 auto; padding: 2rem 0 4rem; }
+  .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--muted); text-decoration: none; font-size: 0.875rem; padding: 1rem 0 1.5rem; transition: color 0.2s ease; }
+  .back-link:hover { color: var(--accent); }
+  .form-header { margin-bottom: 2rem; text-align: center; }
+  .form-header h1 { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.75rem; margin-bottom: 0.25rem; color: var(--fg); }
+  .form-header h1 span { color: var(--accent); }
+  .form-header p { color: var(--muted); font-size: 0.9rem; }
+  .form-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1rem; }
+  .card-title { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1rem; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+  .input-group { margin-bottom: 1rem; }
+  label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 0.4rem; letter-spacing: 0.3px; text-transform: uppercase; }
+  input[type="text"], input[type="number"], select { width: 100%; background: var(--surface-700); border: 1.5px solid var(--border); border-radius: 10px; color: var(--fg); font-size: 0.95rem; font-family: 'Space Grotesk', sans-serif; padding: 0.75rem 0.9rem; outline: none; transition: border-color 0.2s ease; }
+  input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+  input[readonly] { color: var(--accent); font-weight: 700; cursor: default; background: var(--surface-800); }
+  .input-hint { font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem; }
+  .price-display { background: var(--accent-dim); border: 1.5px solid var(--accent); border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1rem; display: flex; justify-content: space-between; align-items: center; }
+  .price-label { font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+  .price-value { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+  .price-tier { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+
+  .number-entry { background: var(--surface-700); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; position: relative; }
+  .number-entry .remove-number-btn { position: absolute; top: 0.75rem; right: 0.75rem; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #ef4444; border-radius: 8px; padding: 0.25rem 0.6rem; font-size: 0.75rem; cursor: pointer; }
+  .method-checkboxes { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem; }
+  .method-checkbox { display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; }
+  .method-checkbox input { width: 1rem; height: 1rem; margin: 0; }
+  .add-number-btn { width: 100%; background: rgba(0,230,138,0.1); border: 1.5px dashed var(--accent-dim); color: var(--accent); border-radius: 10px; padding: 0.75rem; font-size: 0.9rem; font-family: inherit; font-weight: 600; cursor: pointer; transition: background 0.2s ease; }
+  .add-number-btn:hover { background: rgba(0,230,138,0.15); }
+
+  .required-badge { display: inline-block; background: rgba(109,40,217,0.15); color: #a78bfa; font-size: 0.65rem; font-weight: 700; padding: 1px 7px; border-radius: 20px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.5px; text-transform: uppercase; }
+  .token-input-wrap { position: relative; }
+  .token-input-wrap input { padding-left: 2.5rem !important; }
+  .token-input-wrap .token-icon { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: #7c3aed; font-size: 0.9rem; pointer-events: none; }
+
+  .file-drop { border: 2px dashed var(--border); border-radius: 12px; padding: 2rem 1.25rem; text-align: center; cursor: pointer; transition: border-color 0.2s ease, background 0.2s ease; position: relative; }
+  .file-drop:hover, .file-drop.over { border-color: var(--accent); background: var(--accent-dim); }
+  .file-drop input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .file-drop-icon { font-size: 2.25rem; margin-bottom: 0.6rem; color: var(--accent); }
+  .file-drop-text { font-size: 0.9rem; color: var(--muted); }
+  .file-drop-text strong { color: var(--fg); }
+  #preview-img { max-width: 100%; border-radius: 10px; margin-top: 1rem; display: none; border: 1px solid var(--border); }
+  .submit-btn { width: 100%; background: var(--accent); color: var(--surface-900); font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.1rem; padding: 1rem; border-radius: 12px; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(0,230,138,0.25); margin-top: 0.5rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+  .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,230,138,0.4); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .error-msg { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 0.75rem 1rem; color: #fca5a5; font-size: 0.9rem; margin-bottom: 1rem; }
+  .duplicate-error { background: rgba(239,68,68,0.12); border: 1.5px solid rgba(239,68,68,0.4); border-radius: 12px; padding: 1rem 1.25rem; color: #fca5a5; font-size: 0.9rem; margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.75rem; }
+  .duplicate-error .dup-icon { font-size: 1.25rem; flex-shrink: 0; margin-top: 0.05rem; }
+  .duplicate-error .dup-text strong { display: block; color: #f87171; font-size: 0.95rem; margin-bottom: 0.2rem; }
+  .form-note { margin-top: 1.5rem; padding: 1rem; background: rgba(0,230,138,0.08); border: 1px solid var(--accent-dim); border-radius: 12px; font-size: 0.85rem; color: var(--muted); }
+  .form-note strong { color: var(--accent); }
+  @media (max-width: 640px) { .order-form-wrapper { padding: 1rem 0 3rem; } .form-card { padding: 1.25rem; } .price-display { flex-direction: column; align-items: flex-start; gap: 0.5rem; } }
+
+  .submit-reqs {
+      margin-top: 1rem;
+      padding: 0.8rem 1rem;
+      background: rgba(255,255,255,0.02);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+  }
+  .submit-reqs-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+  }
+  .req-row {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.3rem 0;
+      font-size: 0.82rem;
+      transition: color 0.2s;
+  }
+  .req-icon {
+      width: 18px;
+      text-align: center;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+  }
+  .req-done .req-icon i { color: var(--accent); }
+  .req-done .req-text { color: var(--accent); }
+  .req-pending .req-icon i { color: var(--muted); }
+  .req-pending .req-text { color: var(--muted); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="order-form-wrapper fade-up">
+  <a href="{% url 'coins:coin_detail' coin.pk %}" class="back-link">
+    <i class="fas fa-arrow-left text-xs"></i> Back to {{ coin.name }}
+  </a>
+
+  <div class="form-header">
+    <h1>Submit <span>{{ coin.name }}</span></h1>
+    <p>Fill in the details below to submit to admin for review</p>
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      {% if 'already been used' in msg.message %}
+      <div class="duplicate-error">
+        <div class="dup-icon"><i class="fas fa-ban"></i></div>
+        <div class="dup-text">
+          <strong>Duplicate Screenshot Detected</strong>
+          {{ msg }}
+        </div>
+      </div>
+      {% else %}
+      <div class="error-msg">{{ msg }}</div>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  <form id="orderForm" method="post" action="{% url 'coins:submit_order' coin.pk %}" enctype="multipart/form-data" data-loader-message="Submitting order details...">
+    {% csrf_token %}
+    <input type="hidden" name="payment_data" id="paymentDataInput">
+    <input type="hidden" name="total_amount" id="totalAmountInput">
+
+    <!-- ── Your Identity ── -->
+    <div class="form-card">
+      <div class="card-title"><i class="fas fa-user-check text-xs"></i> Your Telegram Account</div>
+      {% if is_telegram_authenticated %}
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 0;">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:var(--bg);">
+          {{ telegram_user.first_name|first|default:"?" }}
+        </div>
+        <div>
+          <div style="font-weight:600;color:var(--fg);">
+            {{ telegram_user.first_name }}{% if telegram_user.last_name %} {{ telegram_user.last_name }}{% endif %}
+          </div>
+          <div style="font-size:0.85rem;color:var(--muted);">
+            {% if telegram_user.username %}@{{ telegram_user.username }}{% else %}tg:{{ telegram_user.telegram_id }}{% endif %}
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="input-group">
+        <label>Telegram Username</label>
+        <input type="text" name="telegram_username" placeholder="@yourusername" required>
+        <div class="input-hint">Without @ is fine too</div>
+      </div>
+      {% endif %}
+
+      {% if coin.require_sender_token %}
+      <div class="input-group" style="margin-top:1rem;">
+        <label>
+          {{ coin.sender_token_label }}
+          <span class="required-badge">Required</span>
+        </label>
+        <div class="token-input-wrap">
+          <i class="fas fa-tag token-icon"></i>
+          <input
+            type="text"
+            name="sender_token"
+            placeholder="Enter your {{ coin.sender_token_label|lower }}"
+            required
+          >
+        </div>
+        <div class="input-hint">Provided by admin or your referral partner</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ── Coin Amount ── -->
+    <div class="form-card">
+      <div class="card-title"><i class="fas fa-coins text-xs"></i> Coin Amount</div>
+      <div class="input-group">
+        <label>How many K (thousands) of coins are you submitting?</label>
+        <input type="number" name="coin_amount" id="coinAmount" step="0.01" placeholder="e.g. 5.5" min="0.01" required>
+        <div class="input-hint">1 K = 1000 coins. Example: 5.5 = 5,500 coins</div>
+      </div>
+      <div class="price-display" id="priceDisplay" style="display:none">
+        <div>
+          <div class="price-label">Estimated Payout</div>
+          <div class="price-tier" id="priceTierLabel"></div>
+        </div>
+        <div class="price-value" id="priceValue">—</div>
+      </div>
+      <div id="priceError" style="color:#ef4444;font-size:0.8rem;margin-top:0.5rem;display:none"></div>
+    </div>
+
+    <!-- ── Payout Methods ── -->
+    <div class="form-card">
+      <div class="card-title"><i class="fas fa-wallet text-xs"></i> Payment Methods</div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">
+        Select which payment methods to receive money on. <strong>Save your numbers</strong> in
+        <a href="{% url 'payments:settings' %}" style="color:var(--accent);">Payment Settings</a> first.
+      </p>
+      <div id="methodsContainer">
+        <div class="empty-state" id="noMethodsMsg">No saved payment methods. <a href="{% url 'payments:settings' %}" style="color:var(--accent);">Add one in Settings</a>.</div>
+      </div>
+    </div>
+
+    <!-- ── Screenshot ── -->
+    <div class="form-card">
+      <div class="card-title"><i class="fas fa-image text-xs"></i> Proof Screenshot</div>
+      <div class="file-drop" id="fileDrop">
+        <input type="file" name="screenshot" id="screenshotInput" accept="image/*" required>
+        <div class="file-drop-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+        <div class="file-drop-text"><strong>Click or drag & drop</strong> your proof screenshot</div>
+      </div>
+      <img id="preview-img" src="" alt="Screenshot preview">
+      <!-- Duplicate warning shown before submit -->
+      <div id="dupWarning" style="display:none; margin-top:0.75rem; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:0.75rem 1rem; color:#fca5a5; font-size:0.85rem;">
+        <i class="fas fa-triangle-exclamation"></i> <strong>This screenshot was already submitted.</strong> Please use a new screenshot.
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn">
+      <i class="fas fa-paper-plane text-xs"></i> Submit to Admin
+    </button>
+
+    <div class="submit-reqs" id="submitReqs">
+      <p class="submit-reqs-title"><i class="fas fa-tasks"></i> Complete to submit</p>
+      <div class="req-row req-pending" id="reqAmount">
+        <span class="req-icon"><i class="fas fa-circle"></i></span>
+        <span class="req-text">Enter coin amount within a tier</span>
+      </div>
+      <div class="req-row req-pending" id="reqMethod">
+        <span class="req-icon"><i class="fas fa-circle"></i></span>
+        <span class="req-text">Select a payment method</span>
+      </div>
+      <div class="req-row req-pending" id="reqScreenshot">
+        <span class="req-icon"><i class="fas fa-circle"></i></span>
+        <span class="req-text">Upload proof screenshot</span>
+      </div>
+      <div class="req-row req-pending" id="reqNoDuplicate">
+        <span class="req-icon"><i class="fas fa-circle"></i></span>
+        <span class="req-text">Use a new screenshot (not a duplicate)</span>
+      </div>
+    </div>
+  </form>
+
+  <div class="form-note">
+    <strong><i class="fas fa-lightbulb"></i> Tip:</strong> Double-check your Telegram username and payout details. Admin will contact you there after review.
+  </div>
+</div>
+
+<script>
+const TIERS        = {{ tiers_json|safe }};
+const COIN_ID      = {{ coin.pk }};
+const SAVED_METHODS = {{ saved_methods_json|safe }};
+let selectedMethodIds = new Set();
+let currentTotal      = 0;
+let isSubmitting      = false;
+
+const rejectedHashes = new Set(
+  JSON.parse(sessionStorage.getItem('rejectedScreenshotHashes') || '[]')
+);
+
+// ── Submit button gating ──────────────────────────────────────────────────────
+function checkFormReady() {
+  const hasAmount     = currentTotal > 0;
+  const hasMethod     = selectedMethodIds.size > 0;
+  const hasScreenshot = fileInput && fileInput.files.length > 0;
+  const noDuplicate   = document.getElementById('dupWarning').style.display === 'none'
+                        || document.getElementById('dupWarning').style.display === '';
+
+  const btn = document.getElementById('submitBtn');
+  const ready = hasAmount && hasMethod && hasScreenshot && noDuplicate;
+  btn.disabled = !ready;
+
+  updateReqIcon('reqAmount', hasAmount);
+  updateReqIcon('reqMethod', hasMethod);
+  updateReqIcon('reqScreenshot', hasScreenshot);
+  updateReqIcon('reqNoDuplicate', noDuplicate);
+
+  if (!hasAmount) {
+    btn.title = 'Enter a valid coin amount first';
+  } else if (!hasMethod) {
+    btn.title = 'Select at least one payment method';
+  } else if (!hasScreenshot) {
+    btn.title = 'Upload a proof screenshot';
+  } else if (!noDuplicate) {
+    btn.title = 'Screenshot already used — upload a new one';
+  } else {
+    btn.title = '';
+  }
+}
+
+function updateReqIcon(id, done) {
+  const row = document.getElementById(id);
+  if (!row) return;
+  const icon = row.querySelector('.req-icon i');
+  if (done) {
+    row.classList.remove('req-pending');
+    row.classList.add('req-done');
+    if (icon) { icon.classList.remove('fa-circle'); icon.classList.add('fa-check-circle'); }
+  } else {
+    row.classList.remove('req-done');
+    row.classList.add('req-pending');
+    if (icon) { icon.classList.remove('fa-check-circle'); icon.classList.add('fa-circle'); }
+  }
+}
+
+async function hashFile(file) {
+  const buffer      = await file.arrayBuffer();
+  const hashBuffer  = await crypto.subtle.digest('SHA-256', buffer);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function formatK(value) {
+  const num = value / 1000;
+  return num % 1 === 0 ? num + 'K' : num.toFixed(2) + 'K';
+}
+
+function getPrice(rawAmount) {
+  for (const t of TIERS) {
+    if (rawAmount >= t.min && rawAmount <= t.max) {
+      return { total: (rawAmount / 1000) * t.price_per_k, tier: t };
+    }
+  }
+  return null;
+}
+
+// ── Coin amount / price ───────────────────────────────────────────────────────
+document.getElementById('coinAmount').addEventListener('input', function () {
+  const kValue    = parseFloat(this.value) || 0;
+  const rawAmount = Math.round(kValue * 1000);
+  const priceDisplay   = document.getElementById('priceDisplay');
+  const priceValue     = document.getElementById('priceValue');
+  const priceTierLabel = document.getElementById('priceTierLabel');
+  const priceError     = document.getElementById('priceError');
+
+  if (kValue <= 0) {
+    priceDisplay.style.display = 'none';
+    priceError.style.display   = 'none';
+    document.getElementById('totalAmountInput').value = '';
+    currentTotal = 0;
+    checkFormReady();
+    return;
+  }
+
+  const result = getPrice(rawAmount);
+  if (result) {
+    currentTotal = result.total;
+    priceDisplay.style.display = 'flex';
+    priceValue.textContent     = result.total.toFixed(2);
+    priceTierLabel.textContent =
+      `Tier: ${formatK(result.tier.min)}–${formatK(result.tier.max)} @ ${result.tier.price_per_k}/K`;
+    priceError.style.display   = 'none';
+    document.getElementById('totalAmountInput').value = result.total.toFixed(2);
+  } else {
+    priceDisplay.style.display = 'none';
+    priceError.style.display   = 'block';
+    priceError.textContent     = 'Amount is outside available price tiers.';
+    currentTotal = 0;
+    document.getElementById('totalAmountInput').value = '';
+  }
+  checkFormReady();
+});
+
+// ── Payment methods ───────────────────────────────────────────────────────────
+function escapeHtml(str) {
+  if (!str) return '';
+  const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return str.replace(/[&<>"']/g, m => map[m]);
+}
+
+function renderMethods() {
+  const container = document.getElementById('methodsContainer');
+  if (!container) return;
+
+  if (SAVED_METHODS.length === 0) {
+    document.getElementById('noMethodsMsg').style.display = 'block';
+    return;
+  }
+  document.getElementById('noMethodsMsg').style.display = 'none';
+
+  let html = '<div style="display:flex;flex-direction:column;gap:0.75rem;">';
+  SAVED_METHODS.forEach(sm => {
+    const checked = selectedMethodIds.has(sm.id) ? 'checked' : '';
+    html += `
+      <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;padding:0.75rem 1rem;
+                    background:var(--surface-900);border:1px solid var(--border);border-radius:10px;cursor:pointer;">
+        <input type="checkbox" value="${sm.id}" ${checked}
+               onchange="toggleSavedMethod(${sm.id}, this.checked)"
+               style="accent-color:var(--accent);width:1rem;height:1rem;">
+        <span style="flex:1;font-weight:600;color:var(--fg);">${escapeHtml(sm.display_name)}</span>
+        <code style="background:var(--surface-700);padding:3px 10px;border-radius:6px;
+                     font-size:0.8rem;color:var(--muted);">${escapeHtml(sm.account_number)}</code>
+      </label>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function toggleSavedMethod(savedId, isChecked) {
+  if (isChecked) {
+    selectedMethodIds.add(savedId);
+  } else {
+    selectedMethodIds.delete(savedId);
+  }
+  checkFormReady();   // ← re-evaluate on every checkbox change
+}
+
+renderMethods();
+
+// ── Screenshot preview + duplicate warning ────────────────────────────────────
+const fileInput = document.getElementById('screenshotInput');
+
+async function handleFileSelected(file) {
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('preview-img');
+    img.src = e.target.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+
+  try {
+    const hash       = await hashFile(file);
+    const dupWarning = document.getElementById('dupWarning');
+    if (rejectedHashes.has(hash)) {
+      dupWarning.style.display = 'block';
+    } else {
+      dupWarning.style.display = 'none';
+    }
+  } catch (err) {
+    // crypto.subtle unavailable — server will catch duplicates
+  }
+
+  checkFormReady();   // ← re-evaluate after file is chosen
+}
+
+fileInput.addEventListener('change', function () {
+  handleFileSelected(this.files[0]);
+});
+
+const drop = document.getElementById('fileDrop');
+drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => {
+  e.preventDefault();
+  drop.classList.remove('over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  fileInput.files = dt.files;
+  handleFileSelected(file);
+});
+
+// ── Form submit ───────────────────────────────────────────────────────────────
+document.getElementById('orderForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  if (isSubmitting) return;
+
+  // Final safety guard (button should already be disabled if invalid)
+  if (currentTotal <= 0 || selectedMethodIds.size === 0 || !fileInput.files[0]) return;
+
+  // Build payment data
+  const paymentData = [];
+  for (const sm of SAVED_METHODS) {
+    if (selectedMethodIds.has(sm.id)) {
+      paymentData.push({
+        saved_method_id: sm.id,
+        account_number:  sm.account_number,
+        amount:          currentTotal
+      });
+    }
+  }
+  document.getElementById('paymentDataInput').value = JSON.stringify(paymentData);
+
+  // Hash check before submit
+  try {
+    const hash = await hashFile(fileInput.files[0]);
+    if (rejectedHashes.has(hash)) {
+      document.getElementById('dupWarning').style.display = 'block';
+      checkFormReady();
+      return;
+    }
+    rejectedHashes.add(hash);
+    sessionStorage.setItem('rejectedScreenshotHashes', JSON.stringify([...rejectedHashes]));
+  } catch (err) { /* server will catch */ }
+
+  isSubmitting = true;
+  const btn = document.getElementById('submitBtn');
+  btn.disabled  = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i> Submitting…';
+  this.submit();
+});
+
+// ── Init: button starts disabled ─────────────────────────────────────────────
+checkFormReady();
+</script>
+{% endblock %}

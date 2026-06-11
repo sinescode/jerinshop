@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en"{% if is_telegram_authenticated %} class="tg-guard"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}Jerin Shop{% endblock %}</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    {% if is_telegram_authenticated %}
+    <style>.tg-guard{display:none!important}</style>
+    <script>
+        (function() {
+            var tg = window.Telegram && window.Telegram.WebApp;
+            if (!tg) {
+                // SDK not loaded at all — not inside Telegram, redirect
+                window.location.replace('/require-telegram/');
+                return;
+            }
+            if (tg.initData) {
+                document.documentElement.classList.remove('tg-guard');
+                return;
+            }
+            // SDK loaded but initData not populated yet — retry (some devices
+            // inject it asynchronously after the script loads)
+            var attempts = 0;
+            function poll() {
+                if (tg.initData) {
+                    document.documentElement.classList.remove('tg-guard');
+                    return;
+                }
+                if (++attempts < 30) {
+                    setTimeout(poll, 100);
+                } else {
+                    // After 3 seconds, give up and redirect
+                    window.location.replace('/require-telegram/');
+                }
+            }
+            setTimeout(poll, 100);
+        })();
+    </script>
+    {% endif %}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" media="print" onload="this.media='all'">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Outfit', 'sans-serif'],
+                        body: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#edfff7',
+                            100: '#d5ffee',
+                            200: '#aeffde',
+                            300: '#70ffc5',
+                            400: '#2bfda5',
+                            500: '#00e68a',
+                            600: '#00bf6e',
+                            700: '#009559',
+                            800: '#067549',
+                            900: '#07603e',
+                        },
+                        surface: {
+                            900: '#0a0e17',
+                            800: '#0f1520',
+                            700: '#151d2e',
+                            600: '#1c2640',
+                            500: '#253252',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg: #0a0e17;
+            --fg: #e8ecf4;
+            --muted: #6b7a99;
+            --accent: #00e68a;
+            --accent-dim: rgba(0, 230, 138, 0.15);
+            --card: rgba(21, 29, 46, 0.7);
+            --border: rgba(107, 122, 153, 0.15);
+            --glow: rgba(0, 230, 138, 0.3);
+        }
+
+        * { box-sizing: border-box; }
+
+        html {
+            scroll-behavior: auto;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            overflow-x: hidden;
+        }
+
+        /* Custom scrollbar - static */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
+        }
+
+        /* Background ambient blobs - static positioning */
+        .ambient-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .ambient-bg .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.4;
+        }
+
+        .ambient-bg .blob-1 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(0,230,138,0.25), transparent 70%);
+            top: -10%; left: -5%;
+        }
+
+        .ambient-bg .blob-2 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(0,191,110,0.2), transparent 70%);
+            bottom: -10%; right: -5%;
+        }
+
+        .ambient-bg .blob-3 {
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(0,149,89,0.15), transparent 70%);
+            top: 40%; left: 50%;
+        }
+
+        /* Grid pattern overlay - static */
+        .grid-pattern {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 60px 60px;
+            opacity: 0.3;
+            mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 20%, transparent 80%);
+            -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 20%, transparent 80%);
+        }
+
+        /* Navbar glass - static state */
+        .nav-glass {
+            background: rgba(10, 14, 23, 0.92);
+            backdrop-filter: blur(20px) saturate(1.6);
+            -webkit-backdrop-filter: blur(20px) saturate(1.6);
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Nav link styles - static hover only */
+        .nav-link {
+            position: relative;
+            color: var(--muted);
+            font-weight: 500;
+            font-size: 0.875rem;
+            letter-spacing: 0.01em;
+            padding: 0.4rem 0;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            border-radius: 1px;
+            transform: translateX(-50%);
+            box-shadow: 0 0 8px var(--glow);
+        }
+
+        .nav-link:hover {
+            color: var(--fg);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Logo static gradient */
+        .logo-text {
+            background: linear-gradient(135deg, var(--accent), #70ffc5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            margin-left: 2px;
+            box-shadow: 0 0 12px var(--glow);
+        }
+
+        /* Mobile menu - static positioning */
+        .mobile-menu {
+            transform: translateX(100%);
+        }
+
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+
+        .mobile-menu-overlay {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .mobile-menu-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .mobile-nav-link {
+            color: var(--muted);
+            font-weight: 500;
+            font-size: 1.1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .mobile-nav-link:hover {
+            color: var(--accent);
+            padding-left: 0.5rem;
+        }
+
+        .mobile-nav-link i {
+            width: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            opacity: 0.6;
+        }
+
+        .mobile-nav-link:hover i {
+            opacity: 1;
+        }
+
+        /* Hamburger - static */
+        .hamburger span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--fg);
+            border-radius: 1px;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+            transform: scaleX(0);
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+        /* Content area */
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Footer - static glass */
+        .footer-glass {
+            background: rgba(10, 14, 23, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-link {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        .footer-link:hover {
+            color: var(--accent);
+        }
+
+        /* ── Global loader bar ── */
+        .loader-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            z-index: 99999;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .loader-bar.active { opacity: 1; }
+        .loader-bar .bar-slider {
+            position: absolute;
+            top: 0; left: 0;
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, transparent, var(--accent), #70ffc5);
+            box-shadow: 0 0 12px var(--glow);
+            border-radius: 0 2px 2px 0;
+            transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        /* ── Button loading state ── */
+        .btn-loading {
+            pointer-events: none;
+            position: relative;
+            color: transparent !important;
+        }
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 16px; height: 16px;
+            margin: -8px 0 0 -8px;
+            border: 2px solid currentColor;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: btn-spin 0.6s linear infinite;
+        }
+        @keyframes btn-spin { to { transform: rotate(360deg); } }
+
+        /* ── Reusable full-page loader overlay ── */
+        .loader-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99990;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateZ(0);
+            flex-direction: column;
+            gap: 14px;
+            background: var(--bg);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .loader-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .loader-spinner {
+            width: 40px; height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: loader-spin 0.7s linear infinite;
+        }
+        @keyframes loader-spin { to { transform: rotate(360deg); } }
+        .loader-text {
+            color: var(--muted);
+            font-size: 14px;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        /* Entry states - visible by default */
+        .fade-up {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Stagger children - no delay */
+        .stagger > * { animation-delay: 0s !important; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Global loader bar -->
+    <div class="loader-bar" id="loaderBar" aria-hidden="true">
+        <div class="bar-slider"></div>
+    </div>
+
+    <!-- Reusable full-page loader overlay -->
+    <div class="loader-overlay" id="loaderOverlay" aria-hidden="true">
+        <div class="loader-spinner"></div>
+        <div class="loader-text" id="loaderOverlayText">Loading...</div>
+    </div>
+
+    <!-- Ambient background - static -->
+    <div class="ambient-bg" aria-hidden="true">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- Grid pattern - static -->
+    <div class="grid-pattern" aria-hidden="true"></div>
+
+    <!-- Mobile menu overlay - static -->
+    <div class="mobile-menu-overlay fixed inset-0 bg-black/60 z-40" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+
+    <!-- Mobile slide-out menu - static -->
+    <aside class="mobile-menu fixed top-0 right-0 h-full w-72 z-50 bg-surface-800/95 backdrop-blur-xl border-l border-white/5 p-6 flex flex-col" id="mobileMenu" role="navigation" aria-label="Mobile navigation">
+        <div class="flex justify-between items-center mb-8">
+            <span class="logo-text font-display font-bold text-lg">Menu</span>
+            <button onclick="toggleMobileMenu()" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/5" aria-label="Close menu">
+                <i class="fas fa-xmark text-lg" style="color: var(--muted)"></i>
+            </button>
+        </div>
+        <nav class="flex flex-col gap-0">
+            <a href="{% url 'home' %}" class="mobile-nav-link" onclick="toggleMobileMenu()">
+                <i class="fas fa-house"></i> Home
+            </a>
+            {% if is_telegram_authenticated %}
+            <a href="{% url 'telegram_auth:profile' %}" class="mobile-nav-link" onclick="toggleMobileMenu()">
+                <i class="fas fa-user"></i> Profile
+            </a>
+            <a href="{% url 'telegram_auth:history' %}" class="mobile-nav-link" onclick="toggleMobileMenu()">
+                <i class="fas fa-clock-rotate-left"></i> History
+            </a>
+            <a href="{% url 'payments:settings' %}" class="mobile-nav-link" onclick="toggleMobileMenu()">
+                <i class="fas fa-gear"></i> Payment Settings
+            </a>
+            {% endif %}
+            <a href="{% url 'coins:home' %}" class="mobile-nav-link" onclick="toggleMobileMenu()">
+                <i class="fas fa-coins"></i> Coin
+            </a>
+            <a href="{% url 'alllinks:work_methods' %}" class="mobile-nav-link" onclick="toggleMobileMenu()">
+                <i class="fas fa-briefcase"></i> Work/Methods
+            </a>
+            <a href="{% url 'alllinks:apk_links' %}" class="mobile-nav-link" onclick="toggleMobileMenu()">
+                <i class="fas fa-download"></i> All APKs
+            </a>
+            <a href="{% url 'alllinks:channel_links' %}" class="mobile-nav-link" onclick="toggleMobileMenu()">
+                <i class="fab fa-telegram"></i> Channels
+            </a>
+            <a href="{% url 'alllinks:about_us' %}" class="mobile-nav-link" style="border-bottom: none;" onclick="toggleMobileMenu()">
+                <i class="fas fa-users"></i> About Us
+            </a>
+        </nav>
+        <div class="mt-auto pt-6 border-t" style="border-color: var(--border)">
+            {% if is_telegram_authenticated %}
+            <a href="{% url 'telegram_auth:profile' %}" class="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-semibold text-sm text-surface-900" style="background: var(--accent);" onclick="toggleMobileMenu()">
+                <i class="fas fa-user text-xs"></i> {{ telegram_user.first_name }}
+            </a>
+            {% else %}
+            <a href="#" class="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-semibold text-sm text-surface-900" style="background: var(--accent);">
+                <i class="fas fa-rocket text-xs"></i> Get Started
+            </a>
+            {% endif %}
+        </div>
+    </aside>
+
+    <!-- Navbar - static -->
+    <nav class="nav-glass fixed top-0 left-0 right-0 z-30" id="navbar" role="navigation" aria-label="Main navigation">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <a href="{% url 'home' %}" class="flex items-center gap-1 shrink-0 group" aria-label="Jerin Shop Home">
+                    <span class="font-display font-extrabold text-xl logo-text tracking-tight">Jerin Shop</span>
+                    <span class="logo-dot" aria-hidden="true"></span>
+                </a>
+
+                <!-- Desktop nav links - static -->
+                <div class="hidden lg:flex items-center gap-7">
+                    <a href="{% url 'home' %}" class="nav-link">Home</a>
+                    {% if is_telegram_authenticated %}
+                    <a href="{% url 'telegram_auth:profile' %}" class="nav-link">Profile</a>
+                    <a href="{% url 'telegram_auth:history' %}" class="nav-link">History</a>
+                    <a href="{% url 'payments:settings' %}" class="nav-link">Payment Settings</a>
+                    {% endif %}
+                    <a href="{% url 'coins:home' %}" class="nav-link">Coin</a>
+                    <a href="{% url 'alllinks:work_methods' %}" class="nav-link">Work/Methods</a>
+                    <a href="{% url 'alllinks:apk_links' %}" class="nav-link">All APKs</a>
+                    <a href="{% url 'alllinks:channel_links' %}" class="nav-link">Channels</a>
+                    <a href="{% url 'alllinks:about_us' %}" class="nav-link">About Us</a>
+                </div>
+
+                <!-- Right side: User avatar + Hamburger -->
+                <div class="flex items-center gap-3">
+                    {% if is_telegram_authenticated %}
+                    <a href="{% url 'telegram_auth:profile' %}" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm hover:bg-white/5 transition-colors" style="color: var(--fg); text-decoration: none;">
+                        <span style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--bg);">{{ telegram_user.first_name|first|default:"?" }}</span>
+                        <span class="hidden md:inline">{{ telegram_user.first_name }}</span>
+                    </a>
+                    {% else %}
+                    <a href="#" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm text-surface-900" style="background: var(--accent);">
+                        <i class="fas fa-bolt text-xs"></i> Join Now
+                    </a>
+                    {% endif %}
+                    <button class="hamburger lg:hidden flex flex-col gap-[5px] p-2 rounded-lg hover:bg-white/5" id="hamburgerBtn" onclick="toggleMobileMenu()" aria-label="Open menu" aria-expanded="false">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="flex-grow content-wrapper pt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer - static -->
+    <footer class="footer-glass content-wrapper mt-auto" role="contentinfo">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-10">
+                <!-- Brand column -->
+                <div class="sm:col-span-2 lg:col-span-1">
+                    <a href="{% url 'home' %}" class="flex items-center gap-1 mb-4">
+                        <span class="font-display font-extrabold text-lg logo-text">Jerin Shop</span>
+                        <span class="logo-dot" aria-hidden="true"></span>
+                    </a>
+                    <p class="text-sm leading-relaxed mb-4" style="color: var(--muted);">
+                        Your go-to platform for discovering legitimate online earning methods, tools, and strategies that actually work.
+                    </p>
+                    <div class="flex gap-3">
+                        {% for link in social_links %}
+                        <a href="{{ link.url }}" target="_blank" rel="noopener" class="w-9 h-9 rounded-lg flex items-center justify-center" style="background: var(--accent-dim); color: var(--accent);" aria-label="{{ link.platform }}">
+                            <i class="{{ link.icon_class }} text-sm"></i>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="font-display font-semibold text-sm uppercase tracking-wider mb-4" style="color: var(--fg);">Quick Links</h4>
+                    <ul class="flex flex-col gap-2.5">
+                        <li><a href="{% url 'home' %}" class="footer-link">Home</a></li>
+                        <li><a href="{% url 'coins:home' %}" class="footer-link">Coin Methods</a></li>
+                        <li><a href="{% url 'alllinks:apk_links' %}" class="footer-link">All APKs</a></li>
+                    </ul>
+                </div>
+
+                <!-- Resources -->
+                <div>
+                    <h4 class="font-display font-semibold text-sm uppercase tracking-wider mb-4" style="color: var(--fg);">Resources</h4>
+                    <ul class="flex flex-col gap-2.5">
+                        <li><a href="{% url 'alllinks:work_methods' %}" class="footer-link">Work / Methods</a></li>
+                        <li><a href="{% url 'alllinks:channel_links' %}" class="footer-link">Telegram Channels</a></li>
+                        {% for link in social_links %}
+                        <li><a href="{{ link.url }}" target="_blank" rel="noopener" class="footer-link">{{ link.platform }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- About -->
+                <div>
+                    <h4 class="font-display font-semibold text-sm uppercase tracking-wider mb-4" style="color: var(--fg);">About</h4>
+                    <ul class="flex flex-col gap-2.5">
+                        <li><a href="{% url 'alllinks:about_us' %}" class="footer-link">About Us</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Divider + Copyright -->
+            <div class="pt-6 flex flex-col sm:flex-row justify-between items-center gap-3" style="border-top: 1px solid var(--border);">
+                <p class="text-xs" style="color: var(--muted);">
+                    &copy; {% now "Y" %} Jerin Shop. All rights reserved.
+                </p>
+                <p class="text-xs flex items-center gap-1.5" style="color: var(--muted);">
+                    Built with
+                    <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: var(--accent); box-shadow: 0 0 6px var(--glow);"></span>
+                    for the earning community
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        /* ═══════════════════════════════════════════════
+           Global Loading System for Telegram Mini App
+           ═══════════════════════════════════════════════ */
+
+        const loaderBar = document.getElementById('loaderBar');
+        const loaderOverlay = document.getElementById('loaderOverlay');
+        const loaderOverlayText = document.getElementById('loaderOverlayText');
+        let barHideTimer = null;
+        let barShownAt = 0;
+        const MIN_BAR_MS = 800; // always show bar for at least this long
+
+        /* ── Top loader bar (fake progress) ── */
+        var barProgressTimer = null;
+
+        function showLoaderBar() {
+            barShownAt = Date.now();
+            clearTimeout(barHideTimer);
+            clearTimeout(barProgressTimer);
+            var slider = loaderBar.querySelector('.bar-slider');
+            slider.style.transition = 'none';
+            slider.style.width = '0%';
+            loaderBar.classList.add('active');
+            // Force reflow so the 0% takes effect before we transition
+            void slider.offsetHeight;
+            // Step 1: Quick burst to 70%
+            slider.style.transition = 'width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            slider.style.width = '70%';
+            // Step 2: Slow crawl to 90%
+            barProgressTimer = setTimeout(function () {
+                slider.style.transition = 'width 3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                slider.style.width = '90%';
+            }, 500);
+        }
+
+        function hideLoaderBar() {
+            clearTimeout(barProgressTimer);
+            var slider = loaderBar.querySelector('.bar-slider');
+            slider.style.transition = 'width 0.2s ease';
+            slider.style.width = '100%';
+            var elapsed = Date.now() - barShownAt;
+            var delay = elapsed < MIN_BAR_MS ? MIN_BAR_MS - elapsed : 0;
+            clearTimeout(barHideTimer);
+            barHideTimer = setTimeout(function () {
+                loaderBar.classList.remove('active');
+                slider.style.transition = 'none';
+                slider.style.width = '0%';
+            }, delay + 300);
+        }
+
+        /* ── Full-page overlay loader ── */
+        function showLoaderOverlay(msg) {
+            loaderOverlayText.textContent = msg || 'Loading...';
+            loaderOverlay.classList.add('active');
+        }
+
+        function hideLoaderOverlay() {
+            loaderOverlay.classList.remove('active');
+        }
+
+        /* ── Page load: hide bar/overlay on first paint (bfcache guard) ── */
+        window.addEventListener('load', hideLoaderBar);
+
+        /* ── Link clicks: show bar while navigating ── */
+        document.addEventListener('click', function (e) {
+            var link = e.target.closest('a');
+            if (!link || !link.href) return;
+            if (link.origin !== window.location.origin) return;
+            if (link.href === window.location.href && link.hash) return;
+            if (link.getAttribute('target') === '_blank') return;
+            if (link.getAttribute('download')) return;
+            if (link.href.startsWith('javascript:')) return;
+            if (link.pathname.startsWith('/admin/')) return;
+            showLoaderBar();
+        });
+
+        /* ── Intercept form submissions ── */
+        document.addEventListener('submit', function (e) {
+            var form = e.target.closest('form');
+            if (!form) return;
+            if (form.action && form.action.includes('/admin/')) return;
+
+            var btn = form.querySelector('button[type="submit"], input[type="submit"]');
+            if (!btn || btn.classList.contains('btn-loading')) return;
+
+            btn.classList.add('btn-loading');
+            btn.disabled = true;
+
+            var msg = form.getAttribute('data-loader-message');
+            if (msg) {
+                showLoaderOverlay(msg);
+            } else {
+                var hasFiles = form.querySelector('input[type="file"]');
+                if (hasFiles) {
+                    showLoaderOverlay('Loading...');
+                } else {
+                    showLoaderBar();
+                }
+            }
+        });
+
+        /* ── bfcache ── */
+        document.addEventListener('pageshow', function (e) {
+            if (e.persisted) {
+                hideLoaderBar();
+                hideLoaderOverlay();
+            }
+        });
+
+        /* ── Telegram WebApp ── */
+        (function () {
+            var tg = window.Telegram && window.Telegram.WebApp;
+            if (!tg) return;
+            tg.ready();
+            tg.expand();
+            // Match Telegram header/background to app theme so the WebView
+            // doesn't flash black on devices that default to #000
+            if (tg.setHeaderColor) tg.setHeaderColor('#0a0e17');
+            if (tg.setBackgroundColor) tg.setBackgroundColor('#0a0e17');
+            if (tg.MainButton && tg.MainButton.onClick) {
+                tg.MainButton.onClick(function () { tg.MainButton.showProgress(); });
+            }
+        })();
+    </script>
+
+    <script>
+        /* ── Mobile menu toggle - instant, no animation ── */
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        let menuOpen = false;
+
+        function toggleMobileMenu() {
+            menuOpen = !menuOpen;
+            mobileMenu.classList.toggle('open', menuOpen);
+            mobileOverlay.classList.toggle('open', menuOpen);
+            hamburgerBtn.classList.toggle('active', menuOpen);
+            hamburgerBtn.setAttribute('aria-expanded', menuOpen);
+            document.body.style.overflow = menuOpen ? 'hidden' : '';
+        }
+
+        /* Close on Escape key */
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && menuOpen) toggleMobileMenu();
+        });
+
+        /* ── Navbar scroll state - instant change, no transition ── */
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 20) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        }, { passive: true });
+    </script>
+
+    {% if not is_telegram_authenticated %}
+    <script>
+        (function() {
+            var tg = window.Telegram && window.Telegram.WebApp;
+            if (!tg || !tg.initData) return;
+            // Inside Telegram but not authenticated — redirect through
+            // /require-telegram/ which uses a form POST (proper browser
+            // navigation) so the 7-day session cookie is reliably set.
+            var nextUrl = window.location.pathname + window.location.search;
+            window.location.replace('/require-telegram/?next=' + encodeURIComponent(nextUrl));
+        })();
+    </script>
+{% else %}
+    <script>
+        // Guard: keep tg_web_check alive inside Telegram; redirect outside.
+        (function() {
+            var tg = window.Telegram && window.Telegram.WebApp;
+            if (tg && tg.initData) {
+                // Inside Telegram — refresh the guard cookie every 30 s so
+                // the server-side middleware never blocks this session.
+                var token = '{{ tg_web_token|escapejs }}';
+                if (token) {
+                    var secureFlag = location.protocol === 'https:' ? '; secure' : '';
+                    function refreshGuardCookie() {
+                        document.cookie = 'tg_web_check=' + token + '; max-age=300; path=/; samesite=lax' + secureFlag;
+                    }
+                    refreshGuardCookie();
+                    setInterval(refreshGuardCookie, 30000);
+                }
+                return;  // inside Telegram, all good
+            }
+
+            // Outside Telegram — delete the cookie and redirect.
+            document.cookie = 'tg_web_check=; max-age=0; path=/; samesite=lax';
+            window.location.replace('/require-telegram/');
+        })();
+    </script>
+    {% endif %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

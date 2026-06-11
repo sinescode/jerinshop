@@ -1,0 +1,47 @@
+{% extends 'home/base.html' %}
+{% block title %}Work / Methods — Jerin Shop{% endblock %}
+{% block extra_head %}
+<style>
+  .links-wrap { max-width: 800px; margin: 0 auto; padding: 2rem 0; }
+  .section-title { font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--fg); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+  .section-title i { color: var(--accent); font-size: 1rem; }
+  .method-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 1rem; transition: border-color 0.2s; }
+  .method-card:hover { border-color: var(--accent); }
+  .method-card .method-body { display: flex; gap: 1rem; padding: 1rem 1.25rem; align-items: center; }
+  .method-card .thumb { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; background: var(--accent-dim); flex-shrink: 0; }
+  .method-card .no-thumb { width: 80px; height: 80px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--accent-dim); color: var(--muted); font-size: 1.5rem; flex-shrink: 0; }
+  .method-card .method-info { flex: 1; min-width: 0; }
+  .method-card .method-info .name { font-weight: 600; color: var(--fg); font-size: 0.95rem; margin-bottom: 0.35rem; }
+  .method-card .method-info .watch-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem; border-radius: 6px; font-size: 0.78rem; font-weight: 600; background: var(--accent-dim); color: var(--accent); text-decoration: none; transition: all 0.2s; }
+  .method-card .method-info .watch-btn:hover { background: var(--accent); color: #0a0e17; }
+  .empty { color: var(--muted); font-size: 0.85rem; padding: 1rem 0; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="links-wrap">
+  <div class="section" style="margin-bottom: 2.5rem;">
+    <h2 class="section-title"><i class="fas fa-briefcase"></i> Work / Methods</h2>
+    {% if work_methods %}
+      {% for method in work_methods %}
+      <div class="method-card">
+        <div class="method-body">
+          {% if method.thumbnail_url %}
+          <img src="{{ method.thumbnail_url }}" alt="{{ method.title }}" class="thumb" loading="lazy">
+          {% else %}
+          <div class="no-thumb"><i class="fas fa-play"></i></div>
+          {% endif %}
+          <div class="method-info">
+            <div class="name">{{ method.title }}</div>
+            <a href="{{ method.video_link }}" target="_blank" rel="noopener" class="watch-btn">
+              <i class="fas fa-play"></i> Watch Video
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="empty">No work methods yet.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

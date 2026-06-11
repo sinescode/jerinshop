@@ -1,0 +1,246 @@
+{% extends 'home/base.html' %}
+
+{% block title %}Payment Settings | Jerin Shop{% endblock %}
+
+{% block extra_head %}
+<style>
+  .settings-wrap { max-width: 640px; margin: 0 auto; padding: 1rem 0; }
+  .back-link { display: inline-block; color: var(--muted); text-decoration: none; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.75rem; transition: color 0.15s; }
+  .back-link:hover { color: var(--accent); }
+  .back-link i { margin-right: 0.35rem; }
+  .section-title { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--fg); margin: 1.5rem 0 1rem; display: flex; align-items: center; gap: 0.5rem; }
+  .section-title i { color: var(--accent); font-size: 0.9rem; }
+
+  /* Saved number cards */
+  .saved-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; }
+  .saved-card .number { font-weight: 700; color: var(--fg); font-size: 1rem; margin-bottom: 0.5rem; font-family: 'Outfit', sans-serif; }
+  .saved-card .badges { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.75rem; }
+  .badge-method { font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,230,138,0.25); }
+  .saved-card .actions { display: flex; gap: 0.5rem; }
+  .btn { font-family: inherit; font-size: 0.8rem; font-weight: 600; padding: 0.45rem 0.9rem; border-radius: 10px; border: none; cursor: pointer; white-space: nowrap; }
+  .btn-edit { background: var(--surface-800); color: var(--fg); border: 1px solid var(--border); }
+  .btn-edit:hover { border-color: var(--accent); }
+  .btn-delete { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+
+  /* Add / Edit form */
+  .form-card { background: var(--card); border: 1px solid var(--accent-dim); border-radius: 14px; padding: 1.25rem; margin-bottom: 0.75rem; }
+  .form-card h3 { font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 700; color: var(--fg); margin: 0 0 0.75rem; }
+  .form-card input[type="text"] { width: 100%; background: var(--surface-900); border: 1px solid var(--border); border-radius: 10px; padding: 0.65rem 0.9rem; color: var(--fg); font-family: inherit; font-size: 0.9rem; outline: none; box-sizing: border-box; }
+  .form-card input[type="text"]:focus { border-color: var(--accent); }
+  .form-card input[type="text"]::placeholder { color: var(--muted); }
+  .form-card .chip-grid { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.75rem 0; }
+  .chip { font-size: 0.8rem; font-weight: 500; padding: 0.45rem 0.85rem; border-radius: 20px; cursor: pointer; user-select: none; border: 1px solid var(--border); background: var(--surface-900); color: var(--muted); transition: all 0.15s; }
+  .chip.selected { background: var(--accent-dim); color: var(--accent); border-color: rgba(0,230,138,0.3); }
+  .chip.blocked { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+  .form-card .form-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+  .btn-save { background: var(--accent); color: var(--surface-900); }
+  .btn-cancel { background: var(--surface-800); color: var(--muted); border: 1px solid var(--border); }
+
+  /* Empty state */
+  .empty-state { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 2rem 0; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--accent); color: var(--surface-900); font-weight: 600; padding: 0.75rem 1.5rem; border-radius: 12px; z-index: 9999; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .toast.error { background: #ef4444; color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-wrap">
+  <a href="javascript:history.back()" class="back-link"><i class="fas fa-arrow-left"></i> Back</a>
+  <h1 style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;color:var(--fg);margin-bottom:0.25rem;">
+    <i class="fas fa-gear" style="color:var(--accent)"></i> Payment Settings
+  </h1>
+  <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem;">
+    Save your payment account numbers here. One number can be used for multiple payment methods.
+  </p>
+
+  <!-- Add / Edit Form -->
+  <div class="section-title"><i class="fas fa-plus-circle"></i> <span id="formTitle">Add New Number</span></div>
+  <div class="form-card" id="formCard">
+    <input type="text" id="numberInput" placeholder="Enter your phone or account number" autocomplete="off">
+    <div class="chip-grid" id="chipGrid"></div>
+    <div class="form-actions">
+      <button class="btn btn-save" onclick="handleSave()">Save</button>
+      <button class="btn btn-cancel" id="cancelBtn" style="display:none" onclick="cancelEdit()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Saved Numbers -->
+  <div class="section-title"><i class="fas fa-save"></i> Your Saved Numbers</div>
+  <div id="savedContainer"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const GLOBAL_METHODS = {{ global_json|safe }};
+  const SAVED_GROUPED = {{ saved_grouped_json|safe }};
+
+  let editingNumber = null;  // original account_number being edited, null = adding new
+
+  function getMethodName(id) {
+    const m = GLOBAL_METHODS.find(g => g.id === id);
+    return m ? m.name : 'Unknown';
+  }
+
+  // --- Render ---
+
+  function getBlockedMethodIds() {
+    // In add mode: all already-saved methods are blocked
+    // In edit mode: only methods saved under a DIFFERENT number are blocked
+    const blocked = new Set();
+    for (const g of SAVED_GROUPED) {
+      if (editingNumber === null || g.account_number !== editingNumber) {
+        for (const id of g.global_method_ids) blocked.add(id);
+      }
+    }
+    return blocked;
+  }
+
+  function renderChips(selectedIds) {
+    const blocked = getBlockedMethodIds();
+    const grid = document.getElementById('chipGrid');
+    grid.innerHTML = GLOBAL_METHODS.map(gm => {
+      const sel = selectedIds.has(gm.id) ? ' selected' : '';
+      const blk = blocked.has(gm.id) ? ' blocked' : '';
+      const click = blocked.has(gm.id) ? '' : `onclick="toggleChip(this)"`;
+      return `<span class="chip${sel}${blk}" data-method-id="${gm.id}" ${click}>${escapeHtml(gm.name)}</span>`;
+    }).join('');
+  }
+
+  function getSelectedIds() {
+    const chips = document.querySelectorAll('#chipGrid .chip.selected');
+    return new Set([...chips].map(c => parseInt(c.dataset.methodId)));
+  }
+
+  function toggleChip(chip) {
+    if (chip.classList.contains('blocked')) return;
+    chip.classList.toggle('selected');
+  }
+
+  function renderSaved() {
+    const container = document.getElementById('savedContainer');
+    if (SAVED_GROUPED.length === 0) {
+      container.innerHTML = '<div class="empty-state">No saved numbers yet.</div>';
+      return;
+    }
+    container.innerHTML = SAVED_GROUPED.map((g, idx) => `
+      <div class="saved-card">
+        <div class="number">${escapeHtml(g.account_number)}</div>
+        <div class="badges">
+          ${g.global_method_ids.map(id => `<span class="badge-method">${escapeHtml(getMethodName(id))}</span>`).join('')}
+        </div>
+        <div class="actions">
+          <button class="btn btn-edit" onclick="startEdit(${idx})"><i class="fas fa-pen"></i> Edit</button>
+          <button class="btn btn-delete" onclick="handleDelete(${idx})"><i class="fas fa-trash"></i> Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderAll(selectedIds) {
+    renderChips(selectedIds || new Set());
+    renderSaved();
+  }
+
+  // --- Actions ---
+
+  function startEdit(idx) {
+    const g = SAVED_GROUPED[idx];
+    editingNumber = g.account_number;
+    document.getElementById('formTitle').textContent = 'Edit Number';
+    document.getElementById('numberInput').value = g.account_number;
+    document.getElementById('cancelBtn').style.display = '';
+    renderChips(new Set(g.global_method_ids));
+  }
+
+  function cancelEdit() {
+    editingNumber = null;
+    document.getElementById('formTitle').textContent = 'Add New Number';
+    document.getElementById('numberInput').value = '';
+    document.getElementById('cancelBtn').style.display = 'none';
+    renderChips(new Set());
+  }
+
+  async function handleSave() {
+    const number = document.getElementById('numberInput').value.trim();
+    const selectedIds = [...getSelectedIds()];
+
+    if (!number) { showToast('Enter an account number', true); return; }
+    if (selectedIds.length === 0) { showToast('Select at least one payment method', true); return; }
+
+    const body = { account_number: number, global_method_ids: selectedIds };
+    if (editingNumber && editingNumber !== number) {
+      body.old_account_number = editingNumber;
+    }
+
+    const resp = await fetch('/payments/api/methods/batch-save/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+      body: JSON.stringify(body),
+    });
+    const data = await resp.json();
+
+    if (data.ok) {
+      // Refresh saved list
+      const listResp = await fetch('/payments/api/methods/list-grouped/');
+      const listData = await listResp.json();
+      SAVED_GROUPED.length = 0;
+      SAVED_GROUPED.push(...listData.grouped);
+
+      cancelEdit();
+      renderAll(new Set());
+      showToast(editingNumber ? 'Number updated!' : 'Number saved!');
+      editingNumber = null;
+    } else {
+      showToast(data.error || 'Error saving', true);
+    }
+  }
+
+  async function handleDelete(idx) {
+    const g = SAVED_GROUPED[idx];
+    if (!confirm('Remove "' + g.account_number + '" from all payment methods?')) return;
+
+    const resp = await fetch('/payments/api/methods/batch-delete/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+      body: JSON.stringify({ account_number: g.account_number }),
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      SAVED_GROUPED.splice(idx, 1);
+      // If we were editing this number, cancel edit
+      if (editingNumber === g.account_number) cancelEdit();
+      renderAll(getSelectedIds());
+      showToast('Number removed');
+    }
+  }
+
+  // --- Helpers ---
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function getCsrf() {
+    const match = document.cookie.match(/csrftoken=([^;]+)/);
+    return match ? match[1] : '';
+  }
+
+  let toastTimer;
+  function showToast(msg, isError) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = 'toast' + (isError ? ' error' : '') + ' show';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+
+  // --- Init ---
+  renderAll(new Set());
+</script>
+{% endblock %}

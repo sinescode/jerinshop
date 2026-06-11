@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Telegram Required — Jerin Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --fg: #e8ecf4;
+      --muted: #6b7a99;
+      --accent: #00e68a;
+      --accent-dim: rgba(0, 230, 138, 0.12);
+      --card: rgba(15, 21, 32, 0.85);
+      --border: rgba(107, 122, 153, 0.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+      color: var(--fg);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .page {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 1rem;
+      gap: 1.25rem;
+    }
+
+    /* ── Loading state (shown via JS when inside Telegram) ── */
+    .loader {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .loader.is-active { display: flex; }
+
+    .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid var(--accent-dim);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loader-text {
+      color: var(--muted);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    /* ── Card (shown when outside Telegram) ── */
+    .card-wrap { display: none; }
+    .card-wrap.is-active { display: block; }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem 2rem;
+      text-align: center;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 4px 40px rgba(0, 0, 0, 0.4);
+      animation: cardIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .icon-circle {
+      width: 68px; height: 68px;
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.75rem;
+      margin: 0 auto 1.5rem;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+
+    .title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.375rem; font-weight: 700;
+      color: var(--fg);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+
+    .desc {
+      font-size: 0.875rem; line-height: 1.65;
+      color: var(--muted);
+      margin-bottom: 1.75rem;
+    }
+
+    .desc strong { color: var(--fg); font-weight: 600; }
+
+    .steps {
+      text-align: left;
+      background: var(--accent-dim);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.25rem 1rem;
+      margin-bottom: 0;
+    }
+
+    .steps-label {
+      font-size: 0.6875rem; font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+
+    .steps ol {
+      list-style: none; counter-reset: step;
+      display: flex; flex-direction: column; gap: 0.5rem;
+    }
+
+    .steps li {
+      counter-increment: step;
+      font-size: 0.8125rem; color: var(--muted);
+      display: flex; align-items: center; gap: 0.75rem;
+      line-height: 1.45;
+    }
+
+    .steps li::before {
+      content: counter(step);
+      width: 24px; height: 24px; min-width: 24px;
+      background: var(--accent-dim);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.6875rem; font-weight: 700;
+      color: var(--accent);
+    }
+
+    .steps li a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 1px dashed var(--accent);
+      transition: border-color 0.2s;
+    }
+    .steps li a:hover { border-bottom-style: solid; }
+
+    .steps li strong { color: var(--fg); font-weight: 600; }
+
+    .page-footer {
+      font-size: 0.6875rem; color: var(--muted);
+      opacity: 0.45; text-align: center;
+    }
+
+    /* ── Error state ── */
+    .error-msg {
+      display: none;
+      color: #ef4444;
+      font-size: 0.875rem;
+      text-align: center;
+      padding: 0 1.5rem;
+      line-height: 1.55;
+    }
+    .error-msg.is-active { display: block; }
+  </style>
+</head>
+<body>
+<div class="page" id="page">
+  <!-- Loading spinner — active when inside Telegram -->
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <div class="loader-text">Verifying your identity...</div>
+  </div>
+
+  <!-- Error message (shown if auth fails) -->
+  <div class="error-msg" id="error"></div>
+
+  <!-- Guide card — active when outside Telegram -->
+  <div class="card-wrap" id="cardWrap">
+    <div class="card">
+      <div class="icon-circle"><i class="fab fa-telegram"></i></div>
+      <h1 class="title">Telegram Required</h1>
+      <p class="desc">
+        This site works exclusively inside <strong>Telegram</strong>.
+        Browser access is not supported — you must open it through the Telegram Mini App.
+      </p>
+
+      <div class="steps">
+        <p class="steps-label">How to access</p>
+        <ol>
+          <li>Open Telegram on any device</li>
+          <li>Open <a href="{{ telegram_required_config.bot_link }}?start=start" target="_blank" rel="noopener">our bot</a> — auto <strong>/start</strong></li>
+          <li>Launch <strong>Jerin Shop</strong></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">Jerin Shop &middot; Telegram Mini App</div>
+</div>
+
+<script>
+(function () {
+  var tg = window.Telegram && window.Telegram.WebApp;
+  var loader = document.getElementById('loader');
+  var cardWrap = document.getElementById('cardWrap');
+  var errorEl = document.getElementById('error');
+  var pageFooter = document.querySelector('.page-footer');
+
+  if (!tg || !tg.initData) {
+    cardWrap.classList.add('is-active');
+    return;
+  }
+
+  // Inside Telegram — show loader and auto-authenticate immediately
+  tg.ready();
+  tg.expand();
+  if (tg.setHeaderColor) tg.setHeaderColor('#0a0e17');
+  if (tg.setBackgroundColor) tg.setBackgroundColor('#0a0e17');
+  loader.classList.add('is-active');
+  if (pageFooter) pageFooter.style.display = 'none';
+
+  var params = new URLSearchParams(window.location.search);
+  var nextUrl = params.get('next') || '/';
+
+  // Submit as a form POST so the browser processes Set-Cookie headers
+  // reliably — no fetch timing race that loses the 7-day session cookie.
+  var form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/api/auth/tg-login/';
+  form.style.display = 'none';
+  var initInput = document.createElement('input');
+  initInput.type = 'hidden';
+  initInput.name = 'init_data';
+  initInput.value = tg.initData;
+  form.appendChild(initInput);
+  var nextInput = document.createElement('input');
+  nextInput.type = 'hidden';
+  nextInput.name = 'next';
+  nextInput.value = nextUrl;
+  form.appendChild(nextInput);
+  document.body.appendChild(form);
+  form.submit();
+})();
+</script>
+</body>
+</html>

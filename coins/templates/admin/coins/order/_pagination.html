@@ -1,0 +1,34 @@
+{% if page.paginator.num_pages > 1 %}
+<div class="tab-pagination">
+  {% if page.has_previous %}
+    <a class="page-link" href="?{{ param_name }}={{ page.previous_page_number }}{% for key,values in request.GET.lists %}{% if key != param_name %}{% for v in values %}&{{ key }}={{ v }}{% endfor %}{% endif %}{% endfor %}">« Prev</a>
+  {% else %}
+    <span class="page-link disabled">« Prev</span>
+  {% endif %}
+
+  <span class="page-info">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+
+  {% if page.has_next %}
+    <a class="page-link" href="?{{ param_name }}={{ page.next_page_number }}{% for key,values in request.GET.lists %}{% if key != param_name %}{% for v in values %}&{{ key }}={{ v }}{% endfor %}{% endif %}{% endfor %}">Next »</a>
+  {% else %}
+    <span class="page-link disabled">Next »</span>
+  {% endif %}
+</div>
+{% endif %}
+
+<style>
+.tab-pagination {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 16px 0; margin-top: 8px;
+}
+.page-link {
+  padding: 8px 16px; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); font-size: 13px; font-weight: 600;
+  text-decoration: none; transition: background 0.15s;
+  font-family: 'Space Grotesk', sans-serif;
+}
+.page-link:hover { background: var(--accent-dim); border-color: rgba(0,230,138,0.3); }
+.page-link.disabled { color: var(--muted); pointer-events: none; opacity: 0.4; }
+.page-info { color: var(--muted); font-size: 13px; font-weight: 500; }
+</style>

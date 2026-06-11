@@ -1,0 +1,304 @@
+{% extends 'home/base.html' %}
+
+{% block title %}History | Jerin Shop{% endblock %}
+
+{% block extra_head %}
+<style>
+  .history-wrap { max-width: 800px; margin: 0 auto; padding: 2rem 0; }
+  .back-link { font-size: 0.82rem; color: var(--muted); text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; margin-bottom: 1rem; transition: color 0.2s; }
+  .back-link:hover { color: var(--accent); }
+  .history-header { margin-bottom: 2rem; }
+  .history-header h2 { font-family: 'Outfit', sans-serif; font-size: 1.7rem; font-weight: 800; color: var(--fg); }
+  .history-header p { color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
+
+  .tab-bar { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; }
+  .tab-btn { flex: 1; padding: 0.75rem 1rem; background: none; border: none; color: var(--muted); font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .order-card, .submission-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 0.85rem; }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+  .card-id { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--accent); }
+  .card-row { display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.82rem; color: var(--muted); }
+  .card-row span { min-width: 0; overflow-wrap: break-word; word-break: break-word; }
+  .card-row span strong { color: var(--fg); font-weight: 600; }
+
+  .status-badge { font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .status-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .status-approved { background: rgba(16,185,129,0.15); color: #10b981; }
+  .status-cancelled { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+  .admin-response { margin-top: 0.75rem; padding: 0.65rem 0.9rem; border-radius: 8px; font-size: 0.8rem; }
+  .admin-response.approved { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); color: #6ee7b7; }
+  .admin-response.cancelled { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; }
+  .admin-response i { margin-right: 0.35rem; }
+
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+  .empty-state i { font-size: 2.5rem; margin-bottom: 0.75rem; color: var(--border); }
+  .empty-state p { font-size: 0.9rem; }
+
+  /* ---- Split Card Layout ---- */
+  .order-card { overflow: hidden; }
+  .card-layout { display: flex; flex-direction: column; gap: 16px; }
+
+  .card-photo { overflow: hidden; }
+  .card-photo img { width: 100%; border-radius: 10px; display: block; transition: opacity 0.25s ease; }
+
+  /* Portrait/stacked default — photo on top, full image visible */
+  .order-card.split-portrait .card-photo img { max-height: 350px; object-fit: contain; background: var(--card); }
+
+  /* Landscape — side by side, full image visible */
+  .order-card.split-landscape .card-layout { flex-direction: row; }
+  .order-card.split-landscape .card-photo { flex: 0 0 55%; max-width: 55%; }
+  .order-card.split-landscape .card-photo img { height: 100%; max-height: 250px; object-fit: contain; background: var(--card); }
+  .order-card.split-landscape .card-details { flex: 1; min-width: 0; }
+
+  /* Details styling */
+  .card-details { display: flex; flex-direction: column; gap: 0.6rem; }
+  .card-info { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; font-size: 0.82rem; color: var(--muted); }
+  .info-row { display: flex; flex-direction: column; gap: 0.1rem; min-width: 80px; }
+  .info-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); opacity: 0.7; }
+  .info-value { font-weight: 600; color: var(--fg); }
+
+  /* Card header inside details — remove bottom margin since details handles spacing */
+  .card-details .card-header { margin-bottom: 0; }
+
+  /* Mobile: always stack vertically */
+  @media (max-width: 500px) {
+    .order-card.split-landscape .card-layout { flex-direction: column; }
+    .order-card.split-landscape .card-photo { flex: none; max-width: 100%; }
+    .order-card.split-landscape .card-photo img { max-height: 220px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="history-wrap">
+  <a href="{% url 'telegram_auth:profile' %}" class="back-link">
+    <i class="fas fa-arrow-left text-xs"></i> Back to Profile
+  </a>
+
+  <div class="history-header">
+    <h2>Activity History</h2>
+    <p>All your orders and submissions in one place</p>
+  </div>
+
+  <div class="tab-bar">
+    <button type="button" id="btn-orders" class="tab-btn active">Coin Orders ({{ total_order_count }})</button>
+    <button type="button" id="btn-submissions" class="tab-btn">Submissions ({{ submission_groups|length }})</button>
+  </div>
+
+  <!-- Orders Tab -->
+  <div class="tab-panel active" id="tab-orders">
+    {% if orders_page %}
+      {% for order in orders_page %}
+      <div class="order-card">
+        <div class="card-layout">
+          {% if order.screenshot_telegram_file_id or order.screenshot_url %}
+          <div class="card-photo">
+            {% if order.screenshot_telegram_file_id %}
+            <a href="{% url 'coins:screenshot_proxy' order.order_id %}" target="_blank" rel="noopener">
+              <img src="{% url 'coins:screenshot_proxy' order.order_id %}" alt="Order screenshot" loading="lazy" />
+            </a>
+            {% else %}
+            <a href="{{ order.screenshot_url }}" target="_blank" rel="noopener">
+              <img src="{{ order.screenshot_url }}" alt="Order screenshot" loading="lazy" />
+            </a>
+            {% endif %}
+          </div>
+          {% endif %}
+          <div class="card-details">
+            <div class="card-header">
+              <span class="card-id">{{ order.order_id }}</span>
+              <span class="status-badge status-{{ order.status }}">{{ order.get_status_display }}</span>
+            </div>
+            <div class="card-info">
+              <div class="info-row">
+                <span class="info-label">Coin</span>
+                <span class="info-value">{{ order.coin.name }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Amount</span>
+                <span class="info-value">{% widthratio order.coin_amount 1000 1 %}K</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Total</span>
+                <span class="info-value">{{ order.total_amount }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Date</span>
+                <span class="info-value">{{ order.created_at|date:"M d, H:i" }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {% if order.status == 'approved' %}
+        <div class="admin-response approved">
+          <i class="fas fa-check-circle"></i> <strong>Admin Response:</strong> Your order has been <strong>approved</strong>. Payment will be processed.
+        </div>
+        {% elif order.status == 'cancelled' %}
+        <div class="admin-response cancelled">
+          <i class="fas fa-times-circle"></i> <strong>Admin Response:</strong> Your order has been <strong>rejected</strong>. Please contact support if you have questions.
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      {% if orders_page.paginator.num_pages > 1 %}
+      <nav class="pagination-nav" style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:1.5rem;flex-wrap:wrap;">
+        {% if orders_page.has_previous %}
+        <a href="?page={{ orders_page.previous_page_number }}#orders" class="page-arrow" style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:10px;text-decoration:none;font-size:0.9rem;transition:all 0.2s;">&lsaquo;</a>
+        {% endif %}
+        {% for num in orders_page.paginator.page_range %}
+          {% if num == orders_page.number %}
+          <span class="page-current" style="display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;background:var(--accent);color:var(--bg);border-radius:10px;font-size:0.82rem;font-weight:700;padding:0 4px;">{{ num }}</span>
+          {% elif num >= orders_page.number|add:"-2" and num <= orders_page.number|add:"2" %}
+          <a href="?page={{ num }}#orders" class="page-link" style="display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:10px;text-decoration:none;font-size:0.82rem;padding:0 4px;transition:all 0.2s;">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if orders_page.has_next %}
+        <a href="?page={{ orders_page.next_page_number }}#orders" class="page-arrow" style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:10px;text-decoration:none;font-size:0.9rem;transition:all 0.2s;">&rsaquo;</a>
+        {% endif %}
+      </nav>
+      {% endif %}
+
+    {% else %}
+      <div class="empty-state">
+        <i class="fas fa-receipt"></i>
+        <p>No orders yet.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Submissions Tab -->
+  <div class="tab-panel" id="tab-submissions">
+    {% if submission_groups %}
+      {% for group in submission_groups %}
+      <div class="submission-card">
+        <div class="card-header">
+          <span class="card-id">{{ group.session_title }}</span>
+          <span style="font-size:0.8rem;color:var(--muted);">{{ group.target_date|date:"Y-m-d" }}</span>
+        </div>
+        <div class="card-row">
+          <span><strong>Total IDs:</strong> {{ group.total_ids }}</span>
+          <span><strong>Files:</strong> {{ group.file_count }}</span>
+          <span>
+            {% if group.report_processed %}
+              <strong>OK:</strong> <span style="color:#10b981;">{{ group.total_ok }}</span>
+            {% else %}
+              <strong>Status:</strong> <span style="color:#f59e0b;">Report Pending</span>
+            {% endif %}
+          </span>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <i class="fas fa-file-excel"></i>
+        <p>No submissions yet.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  var btn = document.getElementById('btn-' + name);
+  if (btn) btn.classList.add('active');
+  var panel = document.getElementById('tab-' + name);
+  if (panel) panel.classList.add('active');
+  try { history.replaceState(null, '', '#' + name); } catch(e) {}
+}
+
+/* Tab click handling via event delegation — no inline onclick needed */
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('.tab-btn');
+  if (btn) {
+    var name = btn.id.replace('btn-', '');
+    switchTab(name);
+  }
+});
+
+(function() {
+  var hash = window.location.hash.replace('#', '');
+  if (hash === 'orders' || hash === 'submissions') {
+    switchTab(hash);
+  }
+})();
+
+/* ---- Aspect-ratio-based card layout ---- */
+(function() {
+  function applySplit(img, card) {
+    if (img.naturalWidth > img.naturalHeight) {
+      /* big:small (landscape) — stack up/down */
+      card.classList.add('split-portrait');
+    } else {
+      /* small:big (portrait) — split left/right */
+      card.classList.add('split-landscape');
+    }
+  }
+
+  function fallbackPortrait(card) {
+    /* Default to left/right layout for tall phone screenshots */
+    card.classList.add('split-landscape');
+  }
+
+  document.querySelectorAll('.order-card').forEach(function(card) {
+    var img = card.querySelector('.card-photo img');
+    if (!img) return;
+
+    var resolved = false;
+
+    function resolve() {
+      if (resolved) return;
+      resolved = true;
+      applySplit(img, card);
+    }
+
+    /* Already loaded (including from browser cache) */
+    if (img.complete && img.naturalWidth > 0) {
+      resolve();
+      return;
+    }
+
+    /* Successful load */
+    img.addEventListener('load', resolve);
+
+    /* On error, default to portrait layout (left/right split for tall phone screenshots) */
+    img.addEventListener('error', function() {
+      if (resolved) return;
+      resolved = true;
+      fallbackPortrait(card);
+    });
+
+    /* requestAnimationFrame polling: check every frame for up to 3s */
+    var pollStart = performance.now();
+    function poll() {
+      if (resolved) return;
+      if (img.naturalWidth > 0) {
+        resolve();
+        return;
+      }
+      if (performance.now() - pollStart > 3000) {
+        resolved = true;
+        fallbackPortrait(card);
+        return;
+      }
+      requestAnimationFrame(poll);
+    }
+    requestAnimationFrame(poll);
+
+    /* setTimeout fallback: force default at 3s */
+    setTimeout(function() {
+      if (resolved) return;
+      resolved = true;
+      fallbackPortrait(card);
+    }, 3000);
+  });
+})();
+</script>
+{% endblock %}

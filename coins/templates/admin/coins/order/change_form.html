@@ -1,0 +1,200 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --bg: #0a0e17; --surface: #0f1520; --surface2: #151d2e;
+    --border: rgba(107,122,153,0.15); --accent: #00e68a;
+    --accent-dim: rgba(0,230,138,0.12); --text: #e8ecf4; --muted: #6b7a99;
+  }
+  .order-detail-wrap { max-width: 520px; margin: 20px 0; font-family: 'Space Grotesk', sans-serif; }
+  .detail-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+
+  .detail-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px; border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, rgba(0,230,138,0.04), transparent);
+  }
+  .detail-title { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: var(--text); }
+  .detail-title span { color: var(--accent); }
+
+  .status-badge { display: inline-block; padding: 5px 14px; border-radius: 100px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .status-pending  { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+  .status-approved { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,230,138,0.3); }
+  .status-cancelled{ background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+
+  .screenshot-wrap { width: 100%; max-height: 280px; overflow: hidden; background: var(--surface2); }
+  .screenshot-wrap img { width: 100%; object-fit: cover; display: block; }
+  .no-screenshot { padding: 40px; text-align: center; color: var(--muted); font-size: 14px; }
+
+  .detail-body { padding: 22px; }
+  .info-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; font-size: 14px; }
+  .info-row:last-child { margin-bottom: 0; }
+  .info-label { min-width: 100px; color: var(--muted); font-weight: 600; font-size: 12px; letter-spacing: 0.4px; text-transform: uppercase; flex-shrink: 0; padding-top: 1px; }
+  .info-val { color: var(--text); font-weight: 500; }
+  .tg-link { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .tg-link:hover { text-decoration: underline; }
+
+  .number-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .method-label { font-size: 11px; color: var(--muted); font-weight: 600; min-width: 65px; }
+  .number-chip {
+    background: rgba(107,122,153,0.1); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 12px; font-family: monospace; font-size: 13px;
+    cursor: pointer; transition: background 0.15s; color: var(--text);
+  }
+  .number-chip:hover { background: var(--accent-dim); border-color: rgba(0,230,138,0.3); }
+  .number-chip.copied { background: var(--accent-dim); color: var(--accent); }
+
+  .total-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 22px; border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.15);
+  }
+  .total-label { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text); font-size: 16px; }
+  .amount-chip {
+    background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 8px; padding: 6px 16px; font-family: 'Outfit', sans-serif;
+    font-size: 20px; font-weight: 800; color: #fbbf24;
+    cursor: pointer; transition: background 0.15s; display: inline-block;
+  }
+  .amount-chip:hover { background: rgba(245,158,11,0.2); }
+  .amount-chip.copied { background: var(--accent-dim); color: var(--accent); border-color: rgba(0,230,138,0.4); }
+
+  .action-btns { display: flex; gap: 10px; padding: 18px 22px; border-top: 1px solid var(--border); }
+  .btn-approve, .btn-cancel {
+    padding: 11px 26px; border: none; border-radius: 9px; font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: 'Space Grotesk', sans-serif; transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-approve { background: var(--accent); color: #0a0e17; }
+  .btn-cancel  { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .btn-approve:hover, .btn-cancel:hover { opacity: 0.85; transform: translateY(-1px); }
+
+  /* Status selector */
+  .status-form { padding: 18px 22px; border-top: 1px solid var(--border); background: rgba(0,0,0,0.1); }
+  .status-form label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .status-form select {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 9px 14px; font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px; font-weight: 500; outline: none; margin-right: 10px;
+    transition: border-color 0.2s;
+  }
+  .status-form select:focus { border-color: var(--accent); }
+  .save-btn {
+    background: var(--accent); color: #0a0e17; border: none; border-radius: 8px;
+    padding: 9px 20px; font-weight: 700; font-size: 13px; cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif; transition: opacity 0.15s;
+  }
+  .save-btn:hover { opacity: 0.85; }
+</style>
+
+<div class="order-detail-wrap">
+  <div class="detail-card">
+    <div class="detail-header">
+      <div class="detail-title">Order <span>#{{ original.pk }}</span></div>
+      <span class="status-badge status-{{ original.status }}">{{ original.get_status_display }}</span>
+    </div>
+
+    <div class="screenshot-wrap">
+      {% if original.screenshot_telegram_file_id %}
+        <img src="{% url 'coins:screenshot_proxy' original.order_id %}" alt="Payment screenshot">
+      {% elif original.screenshot_url %}
+        <img src="{{ original.screenshot_url }}" alt="Payment screenshot">
+      {% else %}
+        <div class="no-screenshot"><i class="fas fa-file"></i> No screenshot uploaded</div>
+      {% endif %}
+    </div>
+
+    <div class="detail-body">
+      <div class="info-row">
+        <span class="info-label">Telegram</span>
+        <span class="info-val"><a class="tg-link" href="https://t.me/{{ original.telegram_username }}" target="_blank">{{ original.telegram_username }}</a></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Coin</span>
+        <span class="info-val">{{ original.coin.name }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Coins</span>
+        <span class="info-val">{{ original.coin_amount|floatformat:0 }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Payment</span>
+        <span class="info-val">
+          {% for p in original.payments.all %}
+            <div class="number-row">
+              <span class="method-label">{{ p.payment_method.name }}</span>
+              <span class="number-chip" onclick="copyText(this, '{{ p.user_number }}')">{{ p.user_number }}</span>
+            </div>
+          {% empty %}
+            <span style="color:var(--muted);font-style:italic">None</span>
+          {% endfor %}
+        </span>
+      </div>
+      <div class="info-row" style="margin-bottom:0">
+        <span class="info-label">Date</span>
+        <span class="info-val" style="color:var(--muted)">{{ original.created_at|date:"M d, Y H:i" }}</span>
+      </div>
+    </div>
+
+    <div class="total-row">
+      <span class="total-label">Total to Receive:</span>
+      <span class="amount-chip" onclick="copyText(this, '{{ original.total_amount }}')">৳ {{ original.total_amount }}</span>
+    </div>
+
+    {% if original.status == 'pending' %}
+    <div class="action-btns">
+      <button class="btn-approve" onclick="quickAction('approve')"><i class="fas fa-check-circle"></i> Approve Order</button>
+      <button class="btn-cancel" onclick="quickAction('cancel')"><i class="fas fa-circle-xmark"></i> Cancel Order</button>
+    </div>
+    {% else %}
+    <div class="status-form">
+      <label>Change Status</label>
+      <select id="statusSelect">
+        <option value="pending"   {% if original.status == 'pending'   %}selected{% endif %}>Pending</option>
+        <option value="approved"  {% if original.status == 'approved'  %}selected{% endif %}>Approved</option>
+        <option value="cancelled" {% if original.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+      </select>
+      <button class="save-btn" onclick="changeStatus()">Save</button>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function copyText(el, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    el.classList.add('copied');
+    const orig = el.textContent;
+    el.textContent = '✓ Copied';
+    setTimeout(() => { el.textContent = orig; el.classList.remove('copied'); }, 1500);
+  });
+}
+
+function quickAction(action) {
+  if (!confirm(`Are you sure you want to ${action} this order?`)) return;
+  fetch(`/admin/coins/order/{{ original.order_id }}/quick-action/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action })
+  }).then(r => r.json()).then(d => {
+    if (d.ok) location.reload();
+    else alert('Error: ' + d.error);
+  });
+}
+
+function changeStatus() {
+  const action = document.getElementById('statusSelect').value;
+  fetch(`/admin/coins/order/{{ original.order_id }}/quick-action/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action })
+  }).then(r => r.json()).then(d => {
+    if (d.ok) location.reload();
+    else alert('Error: ' + d.error);
+  });
+}
+</script>
+{% endblock %}

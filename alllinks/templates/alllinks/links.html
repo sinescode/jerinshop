@@ -1,0 +1,197 @@
+{% extends 'home/base.html' %}
+{% load static %}
+
+{% block title %}All Links — Jerin Shop{% endblock %}
+
+{% block extra_head %}
+<style>
+  .links-wrap { max-width: 800px; margin: 0 auto; padding: 2rem 0; }
+
+  .section { margin-bottom: 2.5rem; }
+  .section-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.25rem; font-weight: 700; color: var(--fg);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .section-title i { color: var(--accent); font-size: 1rem; }
+
+  .link-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.65rem;
+    display: flex; align-items: center; gap: 1rem;
+    transition: border-color 0.2s;
+  }
+  .link-card:hover { border-color: var(--accent); }
+
+  .link-card .icon-wrap {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+    background: var(--accent-dim); color: var(--accent);
+  }
+
+  .link-card .info { flex: 1; min-width: 0; }
+  .link-card .info .name { font-weight: 600; color: var(--fg); font-size: 0.92rem; }
+  .link-card .info .meta { font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
+
+  .link-card .action-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.82rem; font-weight: 600;
+    background: var(--accent-dim); color: var(--accent);
+    text-decoration: none;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .link-card .action-btn:hover { background: var(--accent); color: #0a0e17; }
+
+  .method-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s;
+  }
+  .method-card:hover { border-color: var(--accent); }
+
+  .method-card .method-body { display: flex; gap: 1rem; padding: 1rem 1.25rem; align-items: center; }
+  .method-card .thumb {
+    width: 80px; height: 80px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: var(--accent-dim);
+    flex-shrink: 0;
+  }
+  .method-card .no-thumb {
+    width: 80px; height: 80px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-dim); color: var(--muted);
+    font-size: 1.5rem; flex-shrink: 0;
+  }
+  .method-card .method-info { flex: 1; min-width: 0; }
+  .method-card .method-info .name { font-weight: 600; color: var(--fg); font-size: 0.95rem; margin-bottom: 0.35rem; }
+  .method-card .method-info .watch-btn {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.78rem; font-weight: 600;
+    background: var(--accent-dim); color: var(--accent);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .method-card .method-info .watch-btn:hover { background: var(--accent); color: #0a0e17; }
+
+  .social-row {
+    display: flex; gap: 0.75rem; flex-wrap: wrap;
+  }
+  .social-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.7rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.88rem; font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .social-btn.tg { background: rgba(0,136,204,0.15); color: #38bdf8; }
+  .social-btn.tg:hover { background: #38bdf8; color: #fff; }
+  .social-btn.yt { background: rgba(239,68,68,0.15); color: #f87171; }
+  .social-btn.yt:hover { background: #ef4444; color: #fff; }
+
+  .empty { color: var(--muted); font-size: 0.85rem; padding: 1rem 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="links-wrap">
+
+  <!-- Social Links -->
+  {% if social_links %}
+  <div class="section">
+    <h2 class="section-title"><i class="fas fa-globe"></i> Social</h2>
+    <div class="social-row">
+      {% for link in social_links %}
+      <a href="{{ link.url }}" target="_blank" rel="noopener" class="social-btn tg">
+        <i class="{{ link.icon_class }}"></i> {{ link.platform }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- APK Links -->
+  <div class="section">
+    <h2 class="section-title"><i class="fas fa-mobile-screen-button"></i> APK Downloads</h2>
+    {% if apk_links %}
+      {% for apk in apk_links %}
+      <div class="link-card">
+        <div class="icon-wrap"><i class="fas fa-download"></i></div>
+        <div class="info">
+          <div class="name">{{ apk.app_name }}</div>
+        </div>
+        <a href="{{ apk.apk_link }}" target="_blank" rel="noopener" class="action-btn">
+          <i class="fas fa-download"></i> Download
+        </a>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="empty">No APK links yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- Work Methods -->
+  <div class="section">
+    <h2 class="section-title"><i class="fas fa-briefcase"></i> Work / Methods</h2>
+    {% if work_methods %}
+      {% for method in work_methods %}
+      <div class="method-card">
+        <div class="method-body">
+          {% if method.thumbnail_url %}
+          <img src="{{ method.thumbnail_url }}" alt="{{ method.title }}" class="thumb" loading="lazy">
+          {% else %}
+          <div class="no-thumb"><i class="fas fa-play"></i></div>
+          {% endif %}
+          <div class="method-info">
+            <div class="name">{{ method.title }}</div>
+            <a href="{{ method.video_link }}" target="_blank" rel="noopener" class="watch-btn">
+              <i class="fas fa-play"></i> Watch Video
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="empty">No work methods yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- Channel Links -->
+  <div class="section">
+    <h2 class="section-title"><i class="fas fa-link"></i> Channels</h2>
+    {% if channel_links %}
+      {% for channel in channel_links %}
+      <div class="link-card">
+        <div class="icon-wrap"><i class="{{ channel.icon_class }}"></i></div>
+        <div class="info">
+          <div class="name">{{ channel.channel_name }}</div>
+        </div>
+        <a href="{{ channel.link }}" target="_blank" rel="noopener" class="action-btn">
+          <i class="fas fa-arrow-right"></i> Join
+        </a>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="empty">No channels yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

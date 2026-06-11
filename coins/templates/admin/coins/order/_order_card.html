@@ -1,0 +1,124 @@
+{% load i18n %}
+<div class="order-card {% if order.status == 'pending' %}is-pending{% endif %}" data-order-id="{{ order.order_id }}">
+
+  <div class="order-card-header">
+    <div>
+      <div class="order-id-label">Order</div>
+      <div class="order-id-num">#{{ order.order_id }}</div>
+    </div>
+    <span class="status-badge status-{{ order.status }}">{{ order.get_status_display }}</span>
+  </div>
+
+  {% if order.screenshot_telegram_file_id %}
+    <div class="order-screenshot">
+      <img src="{% url 'coins:screenshot_proxy' order.order_id %}" alt="Payment screenshot" loading="lazy">
+    </div>
+  {% elif order.screenshot_url %}
+    <div class="order-screenshot">
+      <img src="{{ order.screenshot_url }}" alt="Payment screenshot" loading="lazy">
+    </div>
+  {% else %}
+    <div class="no-screenshot-placeholder"><i class="fas fa-file"></i> No screenshot</div>
+  {% endif %}
+
+  <div class="order-card-body">
+    <div class="order-row">
+      <span class="order-row-label">Telegram</span>
+      <span class="order-row-val">
+        <a class="tg-link" href="https://t.me/{{ order.telegram_username }}" target="_blank">{{ order.telegram_username }}</a>
+      </span>
+    </div>
+    {% if order.sender_token %}
+    <div class="order-row">
+      <span class="order-row-label">{{ order.coin.sender_token_label|default:"Sender / Token" }}</span>
+      <span class="order-row-val">
+        <span class="number-chip" style="background:#ede9fe;color:#6d28d9;font-weight:700;"
+              onclick="copyText(this, '{{ order.sender_token }}')">{{ order.sender_token }}</span>
+      </span>
+    </div>
+    {% endif %}
+    <div class="order-row">
+      <span class="order-row-label">Coin</span>
+      <span class="order-row-val">{{ order.coin.name }}</span>
+    </div>
+    <div class="order-row">
+      <span class="order-row-label">Amount</span>
+      <span class="order-row-val">
+        <span class="coin-amount" data-raw="{{ order.coin_amount }}">{{ order.coin_amount }} coins</span>
+      </span>
+    </div>
+    <div class="order-row">
+      <span class="order-row-label">Payment</span>
+      <span class="order-row-val" style="flex:1">
+        {% for p in order.payments.all %}
+          <div class="number-row">
+            <span class="method-label-sm">{{ p.payment_method.name }}</span>
+            <span class="number-chip" onclick="copyText(this, '{{ p.user_number }}')">{{ p.user_number }}</span>
+          </div>
+        {% empty %}
+          <span style="color:var(--muted);font-style:italic;font-size:12px">None recorded</span>
+        {% endfor %}
+      </span>
+    </div>
+    <div class="order-row">
+      <span class="order-row-label">Total</span>
+      <span class="order-row-val">
+        <span class="amount-chip" onclick="copyText(this, '{{ order.total_amount }}')">৳ {{ order.total_amount }}</span>
+      </span>
+    </div>
+    <div class="order-row">
+      <span class="order-row-label">Date</span>
+      <span class="order-row-val" style="color:var(--muted);font-size:12px">{{ order.created_at|date:"M d, Y H:i" }}</span>
+    </div>
+  </div>
+
+  <div class="card-actions">
+    {% if order.status != 'approved' %}
+      {# Pass order_id string, not pk #}
+      <button class="btn-approve" onclick="quickAction('{{ order.order_id }}', 'approve')"><i class="fas fa-check-circle"></i> Approve</button>
+    {% endif %}
+    {% if order.status != 'cancelled' %}
+      <button class="btn-cancel" onclick="quickAction('{{ order.order_id }}', 'cancel')"><i class="fas fa-circle-xmark"></i> Cancel</button>
+    {% endif %}
+    {# Django admin change URL still uses numeric pk #}
+    <a class="btn-view" href="{% url 'admin:coins_order_change' order.pk %}"><i class="fas fa-eye"></i> View</a>
+  </div>
+</div>
+
+<style>
+  .order-screenshot {
+    width: 100%;
+    height: auto !important;
+    overflow: visible !important;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .order-screenshot img {
+    width: 100%;
+    height: auto !important;
+    object-fit: unset !important;
+    display: block;
+  }
+</style>
+
+<script>
+function copyText(el, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    el.classList.add('copied');
+    const orig = el.textContent;
+    el.textContent = '✓ Copied';
+    setTimeout(() => { el.textContent = orig; el.classList.remove('copied'); }, 1500);
+  });
+}
+
+document.querySelectorAll('.coin-amount').forEach(el => {
+  const raw = parseInt(el.dataset.raw);
+  if (!isNaN(raw) && raw > 0) {
+    const k = raw / 1000;
+    const formatted = Number.isInteger(k) ? k + 'K' : k.toFixed(2) + 'K';
+    el.textContent = formatted;
+  } else {
+    el.textContent = '0';
+  }
+});
+</script>
