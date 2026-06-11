@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-01o^lchoy+irk!nwyehvre5%7dqp18mdje$z%v*6e8xq)6p0n)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 
@@ -44,6 +44,7 @@ TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
 TELEGRAM_GROUP_CHAT_ID = os.environ.get('TELEGRAM_GROUP_CHAT_ID', '')
 TELEGRAM_GROUP_CHAT_ID2 = os.environ.get('TELEGRAM_GROUP_CHAT_ID2', '')
 TELEGRAM_WEBHOOK_SECRET = os.environ.get('TELEGRAM_WEBHOOK_SECRET', '')
+MINI_APP_URL = os.environ.get('MINI_APP_URL', 'https://jerinshop.onrender.com')
 
 UNFOLD = {
     "STYLES": [
@@ -80,7 +81,6 @@ MIDDLEWARE = [
     'jerinshop.middleware.TelegramCheckMiddleware',
     'jerinshop.middleware.BanCheckMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
@@ -106,6 +106,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'jerinshop.wsgi.application'
 
+# ═══ DB:SQLITE ═══
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+# ═══ END SQLITE ═══
+
+# ═══ DB:POSTGRESQL ═══
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -119,6 +129,7 @@ DATABASES = {
         'CONN_HEALTH_CHECKS': True,
     }
 }
+# ═══ END POSTGRESQL ═══
 
 # Telegram Mini App / session configuration
 SESSION_COOKIE_SAMESITE = 'Lax'

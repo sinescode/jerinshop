@@ -30,7 +30,7 @@ class TelegramProfileAdmin(admin.ModelAdmin):
     readonly_fields = [
         'telegram_id', 'username', 'first_name', 'last_name',
         'language_code', 'is_premium', 'user_link',
-        'ban_status_display', 'ban_reason_display', 'order_history', 'submission_history',
+        'ban_status_display', 'ban_reason_display', 'order_history',
         'created_at', 'updated_at',
     ]
     fieldsets = [

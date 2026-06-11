@@ -15,12 +15,12 @@
   .saved-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; }
   .saved-card .number { font-weight: 700; color: var(--fg); font-size: 1rem; margin-bottom: 0.5rem; font-family: 'Outfit', sans-serif; }
   .saved-card .badges { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.75rem; }
-  .badge-method { font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,230,138,0.25); }
+  .badge-method { font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0, 230, 138,0.25); }
   .saved-card .actions { display: flex; gap: 0.5rem; }
   .btn { font-family: inherit; font-size: 0.8rem; font-weight: 600; padding: 0.45rem 0.9rem; border-radius: 10px; border: none; cursor: pointer; white-space: nowrap; }
   .btn-edit { background: var(--surface-800); color: var(--fg); border: 1px solid var(--border); }
   .btn-edit:hover { border-color: var(--accent); }
-  .btn-delete { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+  .btn-delete { background: rgba(0, 230, 138, 0.12); color: #00e68a; }
 
   /* Add / Edit form */
   .form-card { background: var(--card); border: 1px solid var(--accent-dim); border-radius: 14px; padding: 1.25rem; margin-bottom: 0.75rem; }
@@ -30,7 +30,7 @@
   .form-card input[type="text"]::placeholder { color: var(--muted); }
   .form-card .chip-grid { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.75rem 0; }
   .chip { font-size: 0.8rem; font-weight: 500; padding: 0.45rem 0.85rem; border-radius: 20px; cursor: pointer; user-select: none; border: 1px solid var(--border); background: var(--surface-900); color: var(--muted); transition: all 0.15s; }
-  .chip.selected { background: var(--accent-dim); color: var(--accent); border-color: rgba(0,230,138,0.3); }
+  .chip.selected { background: var(--accent-dim); color: var(--accent); border-color: rgba(0, 230, 138,0.3); }
   .chip.blocked { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
   .form-card .form-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
   .btn-save { background: var(--accent); color: var(--surface-900); }
@@ -41,7 +41,7 @@
 
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--accent); color: var(--surface-900); font-weight: 600; padding: 0.75rem 1.5rem; border-radius: 12px; z-index: 9999; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
   .toast.show { opacity: 1; }
-  .toast.error { background: #ef4444; color: #fff; }
+  .toast.error { background: #00e68a; color: #fff; }
 </style>
 {% endblock %}
 

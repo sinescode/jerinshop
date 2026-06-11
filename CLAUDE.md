@@ -94,7 +94,7 @@ The `payments` app exposes a REST-ish JSON API (all endpoints `@login_required`)
 
 ### Frontend
 
-- **Tailwind CSS** via CDN (Play CDN), **Font Awesome 6** for icons, **Space Grotesk** (UI) and **Outfit** (headings) fonts
+- **Tailwind CSS v4** via `@tailwindcss/browser@4` CDN (`cdn.jsdelivr.net`), **Font Awesome 6** for icons, **Space Grotesk** (UI) and **Outfit** (headings) fonts
 - Project-level error templates: `templates/400.html`, `403.html`, `404.html`, `500.html`, plus `admin/actions.html`
 - Each app has its own `templates/<app>/` directory; admin override templates in `templates/admin/`
 - `static/css/base.css` — custom styles

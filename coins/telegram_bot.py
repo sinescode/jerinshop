@@ -505,7 +505,7 @@ def send_start_message(chat_id):
         'inline_keyboard': [[
             {
                 'text': config.button_text,
-             'web_app': {'url': 'https://jerinshop.onrender.com'},
+                'web_app': {'url': getattr(settings, 'MINI_APP_URL')},
 
             }
         ]]

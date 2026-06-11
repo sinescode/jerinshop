@@ -8,7 +8,7 @@
   :root {
     --bg: #0a0e17; --surface: #0f1520; --surface2: #151d2e;
     --border: rgba(107,122,153,0.15); --accent: #00e68a;
-    --accent-dim: rgba(0,230,138,0.12); --text: #e8ecf4; --muted: #6b7a99;
+    --accent-dim: rgba(0, 230, 138,0.12); --text: #e8ecf4; --muted: #6b7a99;
   }
   .order-detail-wrap { max-width: 520px; margin: 20px 0; font-family: 'Space Grotesk', sans-serif; }
   .detail-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
@@ -16,15 +16,15 @@
   .detail-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 18px 22px; border-bottom: 1px solid var(--border);
-    background: linear-gradient(135deg, rgba(0,230,138,0.04), transparent);
+    background: linear-gradient(135deg, rgba(0, 230, 138,0.04), transparent);
   }
   .detail-title { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: var(--text); }
   .detail-title span { color: var(--accent); }
 
   .status-badge { display: inline-block; padding: 5px 14px; border-radius: 100px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
   .status-pending  { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
-  .status-approved { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,230,138,0.3); }
-  .status-cancelled{ background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .status-approved { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0, 230, 138,0.3); }
+  .status-cancelled{ background: rgba(0, 230, 138,0.12); color: #2bfda5; border: 1px solid rgba(0, 230, 138,0.3); }
 
   .screenshot-wrap { width: 100%; max-height: 280px; overflow: hidden; background: var(--surface2); }
   .screenshot-wrap img { width: 100%; object-fit: cover; display: block; }
@@ -45,7 +45,7 @@
     border-radius: 6px; padding: 4px 12px; font-family: monospace; font-size: 13px;
     cursor: pointer; transition: background 0.15s; color: var(--text);
   }
-  .number-chip:hover { background: var(--accent-dim); border-color: rgba(0,230,138,0.3); }
+  .number-chip:hover { background: var(--accent-dim); border-color: rgba(0, 230, 138,0.3); }
   .number-chip.copied { background: var(--accent-dim); color: var(--accent); }
 
   .total-row {
@@ -61,7 +61,7 @@
     cursor: pointer; transition: background 0.15s; display: inline-block;
   }
   .amount-chip:hover { background: rgba(245,158,11,0.2); }
-  .amount-chip.copied { background: var(--accent-dim); color: var(--accent); border-color: rgba(0,230,138,0.4); }
+  .amount-chip.copied { background: var(--accent-dim); color: var(--accent); border-color: rgba(0, 230, 138,0.4); }
 
   .action-btns { display: flex; gap: 10px; padding: 18px 22px; border-top: 1px solid var(--border); }
   .btn-approve, .btn-cancel {
@@ -69,7 +69,7 @@
     cursor: pointer; font-family: 'Space Grotesk', sans-serif; transition: opacity 0.15s, transform 0.1s;
   }
   .btn-approve { background: var(--accent); color: #0a0e17; }
-  .btn-cancel  { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .btn-cancel  { background: rgba(0, 230, 138,0.15); color: #2bfda5; border: 1px solid rgba(0, 230, 138,0.3); }
   .btn-approve:hover, .btn-cancel:hover { opacity: 0.85; transform: translateY(-1px); }
 
   /* Status selector */
